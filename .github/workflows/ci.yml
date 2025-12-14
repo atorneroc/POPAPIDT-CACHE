@@ -1,0 +1,67 @@
+name: ci-dotnet9-enterprise-poc
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-dotnet9-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_test:
+    runs-on: ubuntu-latest
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      # Ruta controlada (mejor que usar ~/.nuget/packages en enterprise)
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      # PRs: restaurar caché (NO guardar) para reducir riesgo de cache poisoning
+      - name: Restore NuGet cache (PR safe)
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'NuGet.config', 'global.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      # main / manual: restaurar + guardar caché
+      - name: Cache NuGet (restore+save)
+        if: github.event_name != 'pull_request'
+        id: nuget-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'NuGet.config', 'global.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Show cache-hit (main/manual only)
+        if: github.event_name != 'pull_request'
+        run: echo "cache-hit=${{ steps.nuget-cache.outputs.cache-hit }}"
+
+      - name: Restore
+        run: dotnet restore --verbosity minimal
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Test
+        run: dotnet test --no-build -c Release --verbosity minimal

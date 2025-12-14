@@ -7,28 +7,74 @@
   </PropertyGroup>
 
 <ItemGroup>
-  <!-- Swagger / API -->
+  <!-- API / Docs -->
   <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
 
   <!-- JSON -->
   <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 
-  <!-- Observabilidad (MUY pesado) -->
-  <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
-  <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
-  <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />
+  <!-- Validation / Mapping / Mediation -->
+  <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+  <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+  <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
 
-  <!-- Cloud SDK (muy grande) -->
-  <PackageReference Include="Azure.Identity" Version="1.12.0" />
-  <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.6.0" />
+  <!-- Resiliencia -->
+  <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
 
-  <!-- Logging -->
-  <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
-  <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
+  <!-- Data Access: EF Core + Dapper -->
+  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+    <PrivateAssets>all</PrivateAssets>
+    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+  </PackageReference>
+  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0" />
+  <PackageReference Include="Dapper" Version="2.1.35" />
+
+  <!-- Cache / Redis -->
+  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.0" />
+  <PackageReference Include="StackExchange.Redis" Version="2.8.24" />
+
+  <!-- Background jobs -->
+  <PackageReference Include="Hangfire.AspNetCore" Version="1.8.14" />
+  <PackageReference Include="Hangfire.Redis.StackExchange" Version="1.8.0" />
+  <PackageReference Include="Quartz.Extensions.Hosting" Version="3.10.0" />
+
+  <!-- Mensajería -->
+  <PackageReference Include="MassTransit" Version="8.2.5" />
+  <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.5" />
 
   <!-- Auth / Security -->
   <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
+  <PackageReference Include="Microsoft.Identity.Web" Version="3.4.0" />
+
+  <!-- Reverse proxy / networking -->
+  <PackageReference Include="Yarp.ReverseProxy" Version="2.2.0" />
+  <PackageReference Include="Grpc.AspNetCore" Version="2.64.0" />
+
+  <!-- Logging (varios sinks para “proyecto grande”) -->
+  <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
+  <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
+  <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+  <PackageReference Include="Serilog.Sinks.Seq" Version="7.0.1" />
+
+  <!-- Health checks -->
+  <PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.1" />
+  <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.1" />
+  <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="8.0.1" />
+
+  <!-- Observabilidad (normalmente pesa bastante) -->
+  <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+  <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
+  <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />
+  <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
+  <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.3.0" />
+
+  <!-- Cloud SDK (grande y realista) -->
+  <PackageReference Include="Azure.Identity" Version="1.12.0" />
+  <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.6.0" />
+  <PackageReference Include="Azure.Storage.Blobs" Version="12.21.2" />
 </ItemGroup>
+
 
 
 </Project>

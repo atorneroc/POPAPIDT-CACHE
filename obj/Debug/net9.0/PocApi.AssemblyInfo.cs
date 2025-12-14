@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PocApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8a2447e9ce0243bdcfccb66d8adad333f37589b7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e2ac314159192b65ea53251513aeb02a6a6c28df")]
 [assembly: System.Reflection.AssemblyProductAttribute("PocApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PocApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,4 +1,4 @@
-name: ci-dotnet9-cache-final
+name: ci-node-cache-final
 
 on:
   workflow_dispatch:
@@ -10,91 +10,67 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-dotnet9-${{ github.ref }}
+  group: ci-node-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build_test:
     runs-on: ubuntu-latest
 
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-      # Ruta controlada y explícita para NuGet (enterprise-friendly)
-      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
-
     steps:
-      # =========================
-      # CHECKOUT & SDK
-      # =========================
-
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 9
-        uses: actions/setup-dotnet@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          dotnet-version: "9.0.x"
+          node-version: "20"
+          # Esto configura el cache de npm basado en el lockfile
+          cache: "npm"
+          cache-dependency-path: |
+            package-lock.json
 
-      # =========================
-      # CACHE (SEGURO)
-      # =========================
-
-      # PRs → solo restauran (no escriben cache)
-      - name: Restore NuGet cache (PR safe)
+      # PRs: restore-only (seguro)
+      - name: Restore npm cache (PR safe)
         if: github.event_name == 'pull_request'
         uses: actions/cache/restore@v4
         with:
-          path: ${{ env.NUGET_PACKAGES }}
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-nuget-
+            ${{ runner.os }}-npm-
 
-      # main / manual → restauran y guardan cache
-      - name: Cache NuGet (restore + save)
+      # main/manual: restore+save
+      - name: Cache npm (restore + save)
         if: github.event_name != 'pull_request'
-        id: nuget-cache
+        id: npm-cache
         uses: actions/cache@v4
         with:
-          path: ${{ env.NUGET_PACKAGES }}
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-nuget-
+            ${{ runner.os }}-npm-
 
-      - name: Cache hit?
+      - name: Cache hit? (main/manual only)
         if: github.event_name != 'pull_request'
-        run: echo "cache-hit=${{ steps.nuget-cache.outputs.cache-hit }}"
+        run: echo "cache-hit=${{ steps.npm-cache.outputs.cache-hit }}"
 
-      # =========================
-      # VISIBILIDAD (POC)
-      # =========================
+      - name: npm cache size (before)
+        run: du -sh ~/.npm || true
 
-      - name: Print NuGet global packages folder
-        run: dotnet nuget locals global-packages -l
-
-      - name: NuGet cache size (before restore)
-        run: du -sh .nuget/packages || true
-
-      # =========================
-      # RESTORE (LO QUE MEDIMOS)
-      # =========================
-
-      - name: Restore (timed)
+      - name: Install deps (timed)
         shell: bash
         run: |
-          echo "START RESTORE: $(date -Iseconds)"
-          time dotnet restore --verbosity minimal
-          echo "END RESTORE:   $(date -Iseconds)"
+          echo "START npm ci: $(date -Iseconds)"
+          time npm ci
+          echo "END npm ci:   $(date -Iseconds)"
 
-      - name: NuGet cache size (after restore)
-        run: du -sh .nuget/packages || true
+      - name: npm cache size (after)
+        run: du -sh ~/.npm || true
 
-      # =========================
-      # BUILD & TEST
-      # =========================
-
+      # Ajusta a tu proyecto:
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: npm run build --if-present
 
       - name: Test
-        run: dotnet test --no-build -c Release --verbosity minimal
+        run: npm test --if-present

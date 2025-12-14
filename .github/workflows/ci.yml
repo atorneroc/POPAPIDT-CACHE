@@ -1,4 +1,4 @@
-name: ci-dotnet9-enterprise-poc
+name: ci-dotnet9-cache-final
 
 on:
   workflow_dispatch:
@@ -20,10 +20,14 @@ jobs:
     env:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
-      # Ruta controlada (mejor que usar ~/.nuget/packages en enterprise)
+      # Ruta controlada y explícita para NuGet (enterprise-friendly)
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
 
     steps:
+      # =========================
+      # CHECKOUT & SDK
+      # =========================
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -32,33 +36,62 @@ jobs:
         with:
           dotnet-version: "9.0.x"
 
-      # PRs: restaurar caché (NO guardar) para reducir riesgo de cache poisoning
+      # =========================
+      # CACHE (SEGURO)
+      # =========================
+
+      # PRs → solo restauran (no escriben cache)
       - name: Restore NuGet cache (PR safe)
         if: github.event_name == 'pull_request'
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.NUGET_PACKAGES }}
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'NuGet.config', 'global.json') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      # main / manual: restaurar + guardar caché
-      - name: Cache NuGet (restore+save)
+      # main / manual → restauran y guardan cache
+      - name: Cache NuGet (restore + save)
         if: github.event_name != 'pull_request'
         id: nuget-cache
         uses: actions/cache@v4
         with:
           path: ${{ env.NUGET_PACKAGES }}
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'NuGet.config', 'global.json') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Show cache-hit (main/manual only)
+      - name: Cache hit?
         if: github.event_name != 'pull_request'
         run: echo "cache-hit=${{ steps.nuget-cache.outputs.cache-hit }}"
 
-      - name: Restore
-        run: dotnet restore --verbosity minimal
+      # =========================
+      # VISIBILIDAD (POC)
+      # =========================
+
+      - name: Print NuGet global packages folder
+        run: dotnet nuget locals global-packages -l
+
+      - name: NuGet cache size (before restore)
+        run: du -sh .nuget/packages || true
+
+      # =========================
+      # RESTORE (LO QUE MEDIMOS)
+      # =========================
+
+      - name: Restore (timed)
+        shell: bash
+        run: |
+          echo "START RESTORE: $(date -Iseconds)"
+          time dotnet restore --verbosity minimal
+          echo "END RESTORE:   $(date -Iseconds)"
+
+      - name: NuGet cache size (after restore)
+        run: du -sh .nuget/packages || true
+
+      # =========================
+      # BUILD & TEST
+      # =========================
 
       - name: Build
         run: dotnet build --no-restore -c Release

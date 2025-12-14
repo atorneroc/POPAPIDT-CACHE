@@ -10,7 +10,7 @@ var app = builder.Build();
 app.MapGet("/", (ILogger<Program> logger) =>
 {
     logger.LogInformation("GET / called");
-    return "OK - Dynatrace PoC (.NET 8)";
+    return "OK - Dynatrace PoC (.NET 9)";
 });
 
 app.MapGet("/slow", async (ILogger<Program> logger) =>
